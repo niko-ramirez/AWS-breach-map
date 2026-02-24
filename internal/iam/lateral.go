@@ -123,14 +123,6 @@ var (
 	cacheRolesErr  error
 )
 
-// ResetRolesCache resets the cached roles, useful for testing or if the caller
-// wants to force a re-enumeration (e.g., between separate algorithm runs).
-func ResetRolesCache() {
-	cachedRoles = nil
-	cacheRolesOnce = sync.Once{}
-	cacheRolesErr = nil
-}
-
 // EnumerateAllRoles lists all IAM roles in the account.
 // Results are cached after the first successful call to avoid redundant API calls.
 func EnumerateAllRoles(ctx context.Context, iamClient *iam.Client) ([]iamtypes.Role, error) {

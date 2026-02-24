@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
-	"github.com/aws/aws-sdk-go-v2/service/rds"
 )
 
 // ProcessRDSExposureAndKMSSeparation processes resource-specific steps 1.5, 2, and 3 for RDS
@@ -226,47 +225,6 @@ func AnalyzeRDSExposureFromJewel(db domain.RDSJewel) *domain.ExposureResult {
 	}
 
 	return result
-}
-
-// AnalyzeRDSExposure analyzes RDS database exposure by making an API call
-// Use AnalyzeRDSExposureFromJewel when you have pre-captured RDSJewel data
-func AnalyzeRDSExposure(ctx context.Context, rdsSvc *rds.Client, dbInstanceIdentifier string) (*domain.ExposureResult, error) {
-	// Describe the DB instance to get detailed information
-	describeOutput, err := rdsSvc.DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe DB instance: %w", err)
-	}
-
-	if len(describeOutput.DBInstances) == 0 {
-		return &domain.ExposureResult{
-			ResourceName:  dbInstanceIdentifier,
-			FinalExposure: "Unknown",
-			Details:       "DB instance not found",
-		}, nil
-	}
-
-	dbInstance := describeOutput.DBInstances[0]
-
-	// Convert to RDSJewel and use the shared analysis function
-	encrypted := dbInstance.StorageEncrypted != nil && *dbInstance.StorageEncrypted
-	iamAuthEnabled := dbInstance.IAMDatabaseAuthenticationEnabled != nil && *dbInstance.IAMDatabaseAuthenticationEnabled
-	publiclyAccessible := dbInstance.PubliclyAccessible != nil && *dbInstance.PubliclyAccessible
-	engine := aws.ToString(dbInstance.Engine)
-
-	tempJewel := domain.RDSJewel{
-		ARN:                aws.ToString(dbInstance.DBInstanceArn),
-		ResourceType:       "RDS",
-		Name:               aws.ToString(dbInstance.DBInstanceIdentifier),
-		Encrypted:          &encrypted,
-		KMSKeyID:           dbInstance.KmsKeyId,
-		IAMAuthEnabled:     &iamAuthEnabled,
-		PubliclyAccessible: &publiclyAccessible,
-		Engine:             &engine,
-	}
-
-	return AnalyzeRDSExposureFromJewel(tempJewel), nil
 }
 
 // VerifyRDSAuthorization performs authorization verification for RDS databases

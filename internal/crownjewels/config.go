@@ -123,32 +123,6 @@ func GetNegativeRegex() *regexp.Regexp {
 	return compiledPatterns.Negative
 }
 
-// ReloadConfig reloads patterns from a config file and recompiles regex
-func ReloadConfig(configPath string) error {
-	config, err := LoadConfig(configPath)
-	if err != nil {
-		return err
-	}
-	compiledPatterns = CompilePatterns(config)
-	return nil
-}
-
-// LoadARNConfig loads user-specified crown jewel ARNs from a YAML file
-func LoadARNConfig(configPath string) error {
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return err
-	}
-	var config ARNConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return err
-	}
-	for _, arn := range config.ARNJewels {
-		knownARNs[arn] = true
-	}
-	return nil
-}
-
 // IsKnownARN checks if an ARN is in the user-specified crown jewels list
 func IsKnownARN(arn string) bool {
 	return knownARNs[arn]

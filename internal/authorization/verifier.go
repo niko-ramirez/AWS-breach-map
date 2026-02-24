@@ -51,28 +51,7 @@ type Verifier struct {
 	ExtractResourceNameFn  func(resourceARN string) string
 }
 
-// NewVerifier creates a new Verifier with the given dependencies.
-func NewVerifier(
-	getAWSClient func(ctx context.Context, service string) (interface{}, error),
-	normalizeToList func(value interface{}) []string,
-	extractResourceName func(resourceARN string) string,
-) *Verifier {
-	return &Verifier{
-		GetAWSClient:          getAWSClient,
-		NormalizeToList:       normalizeToList,
-		ExtractResourceNameFn: extractResourceName,
-	}
-}
-
-// ClearCaches clears all cached data. Useful for testing.
-func (v *Verifier) ClearCaches() {
-	v.keyPolicyCache = sync.Map{}
-	v.parsedKeyPolicyCache = sync.Map{}
-	v.kmsDecryptResultCache = sync.Map{}
-}
-
 // defaultVerifier is the package-level verifier for backward compatibility.
-// Use NewVerifier() for better testability and isolation.
 var defaultVerifier = &Verifier{}
 
 // Dependencies holds injected functions (kept for backward compatibility)
@@ -88,11 +67,6 @@ func SetDependencies(d Dependencies) {
 	defaultVerifier.GetAWSClient = d.GetAWSClient
 	defaultVerifier.NormalizeToList = d.NormalizeToList
 	defaultVerifier.ExtractResourceNameFn = d.ExtractBucketName
-}
-
-// ClearCaches clears all cached data in the default verifier. Useful for testing.
-func ClearCaches() {
-	defaultVerifier.ClearCaches()
 }
 
 // isThrottlingError checks if an error is a throttling/rate limit error
@@ -229,7 +203,7 @@ func VerifyAuthorization(
 	// Step 2a: Check bucket policy for explicit denies targeting this principal
 	// This is important because bucket policies can override identity-based policies
 	if policyStatements != nil {
-		bucketPolicyDenies := checkPolicyStatementsForDeny(policyStatements, bucketName, principalARN)
+		bucketPolicyDenies := checkPolicyStatementsForDeny(policyStatements, principalARN)
 		if bucketPolicyDenies {
 			logging.LogDebug(fmt.Sprintf("Bucket policy DENY overrides IAM policy for %s on %s: ResourceAccessAllowed=false (bucket policy explicitly denies this principal)",
 				principalARN, bucketARN))
@@ -370,10 +344,6 @@ func GetKMSKeyFromBucket(ctx context.Context, s3Client *s3.Client, bucketName st
 	return "", nil
 }
 
-func getOrFetchKeyPolicy(ctx context.Context, kmsClient *kms.Client, keyARN string) (*string, error) {
-	return defaultVerifier.getOrFetchKeyPolicy(ctx, kmsClient, keyARN)
-}
-
 func (v *Verifier) getOrFetchKeyPolicy(ctx context.Context, kmsClient *kms.Client, keyARN string) (*string, error) {
 	if cached, ok := v.keyPolicyCache.Load(keyARN); ok {
 		if policy, ok := cached.(*string); ok && policy != nil {
@@ -391,10 +361,6 @@ func (v *Verifier) getOrFetchKeyPolicy(ctx context.Context, kmsClient *kms.Clien
 
 	v.keyPolicyCache.Store(keyARN, keyPolicy.Policy)
 	return keyPolicy.Policy, nil
-}
-
-func parseKeyPolicy(keyARN string, policyJSON *string) (*parsedKeyPolicy, error) {
-	return defaultVerifier.parseKeyPolicy(keyARN, policyJSON)
 }
 
 func (v *Verifier) parseKeyPolicy(keyARN string, policyJSON *string) (*parsedKeyPolicy, error) {
@@ -509,10 +475,6 @@ func normalizeToListInternal(value interface{}) []string {
 	default:
 		return []string{}
 	}
-}
-
-func checkKeyPolicyForPrincipalOptimized(keyARN string, principalARN string) (bool, error) {
-	return defaultVerifier.checkKeyPolicyForPrincipalOptimized(keyARN, principalARN)
 }
 
 func (v *Verifier) checkKeyPolicyForPrincipalOptimized(keyARN string, principalARN string) (bool, error) {
@@ -777,7 +739,6 @@ func fetchBucketPolicyStatements(
 // checkPolicyStatementsForDeny checks parsed bucket policy statements for explicit Deny targeting the principal
 func checkPolicyStatementsForDeny(
 	statements []interface{},
-	bucketName string,
 	principalARN string,
 ) bool {
 	for _, stmtInterface := range statements {

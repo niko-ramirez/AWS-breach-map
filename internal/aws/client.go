@@ -127,21 +127,3 @@ func GetAccountID(ctx context.Context) (string, error) {
 	return aws.ToString(result.Account), nil
 }
 
-// GetSSMParameter retrieves a parameter from SSM
-func GetSSMParameter(ctx context.Context, parameterName string) (string, error) {
-	ssmClient, err := GetAWSClient(ctx, "ssm")
-	if err != nil {
-		return "", fmt.Errorf("failed to get SSM client: %w", err)
-	}
-
-	ssmSvc := ssmClient.(*ssm.Client)
-	result, err := ssmSvc.GetParameter(ctx, &ssm.GetParameterInput{
-		Name:           aws.String(parameterName),
-		WithDecryption: aws.Bool(true),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get parameter %s: %w", parameterName, err)
-	}
-
-	return aws.ToString(result.Parameter.Value), nil
-}

@@ -2,7 +2,6 @@ package network
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -267,54 +266,3 @@ func describeInvariant(id domain.NetworkInvariantID) string {
 	}
 }
 
-// QuickCheckVPCBlocked is a lightweight check that only looks at VPC deny conditions
-// Use this for fast filtering before doing full authorization checks
-func QuickCheckVPCBlocked(policyJSON string, sourceVPCID string) (bool, string) {
-	if sourceVPCID == "" || policyJSON == "" {
-		return false, "No VPC context or policy to check"
-	}
-
-	var policyDoc map[string]interface{}
-	if err := json.Unmarshal([]byte(policyJSON), &policyDoc); err != nil {
-		return false, "Could not parse policy"
-	}
-
-	conditions := ExtractConditionsFromPolicyDoc(policyDoc)
-
-	// Check explicit deny
-	for _, denied := range conditions.DeniedVPCs {
-		if denied == sourceVPCID {
-			return true, "VPC explicitly denied by policy"
-		}
-	}
-
-	// Check inverse whitelist (Deny + StringNotEquals)
-	if len(conditions.DenyIfNotInVPCs) > 0 {
-		found := false
-		for _, allowed := range conditions.DenyIfNotInVPCs {
-			if allowed == sourceVPCID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return true, "VPC not in exception list (Deny + StringNotEquals)"
-		}
-	}
-
-	// Check whitelist
-	if len(conditions.AllowedVPCs) > 0 {
-		found := false
-		for _, allowed := range conditions.AllowedVPCs {
-			if allowed == sourceVPCID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return true, "VPC not in allowed list"
-		}
-	}
-
-	return false, "VPC conditions do not block"
-}
