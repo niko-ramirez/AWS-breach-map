@@ -1,0 +1,161 @@
+# Crown Jewel Detection Patterns
+# 
+# Resources matching positive patterns are considered crown jewels,
+# UNLESS they also match a negative pattern (which excludes them).
+#
+# Patterns are matched as whole words (case-insensitive).
+# Supports: hyphen-separated, underscore_separated, and camelCase.
+
+positive_patterns:
+  # Production environment indicators
+  environment:
+    - prod
+    - production
+    - live
+    - main
+    - master
+    - primary
+    - real
+
+  # Data sensitivity indicators  
+  sensitivity:
+    - customer
+    - cust
+    - client
+    - user
+    - userdata
+    - pii
+    - phi
+    - sensitive
+    - secret
+    - secrets
+    - confidential
+    - classified
+
+  # Security-related
+  security:
+    - secure
+    - vault
+    - key
+    - keystore
+    - token
+    - credential
+    - credentials
+    - password
+
+  # Financial data
+  financial:
+    - payment
+    - billing
+    - finance
+    - financial
+    - revenue
+    - salary
+    - payroll
+    - ssn
+    - credit
+    - creditcard
+    - transaction
+    - order
+    - invoice
+
+  # Healthcare/Legal
+  regulated:
+    - policy
+    - claim
+    - medical
+    - health
+    - record
+
+  # Identity
+  identity:
+    - account
+    - personal
+    - person
+    - identity
+    - auth
+    - authentication
+    - authorization
+    - login
+    - passport
+
+  # Compliance
+  compliance:
+    - gov
+    - tax
+    - irs
+    - pci
+    - hipaa
+    - gdpr
+    - restricted
+    - critical
+
+  # Infrastructure
+  infrastructure:
+    - core
+    - backend
+    - mainframe
+    - ledger
+    - bank
+    - crypto
+    - wallet
+
+  # ML/IP
+  intellectual_property:
+    - model
+    - weights
+    - ip
+
+  # Other
+  other:
+    - public
+    - data
+
+negative_patterns:
+  # Non-production environments
+  environment:
+    - test
+    - testing
+    - tests
+    - dev
+    - development
+    - staging
+    - sandbox
+    - sample
+    - demo
+
+  # Training/learning
+  training:
+    - training
+    - train
+
+  # Temporary/archived
+  temporary:
+    - tmp
+    - temp
+    - backup
+    - old
+    - archive
+
+  # Mock/example
+  mock:
+    - mock
+    - example
+    - prototype
+    - practice
+    - draft
+
+  # QA/Performance
+  testing:
+    - qa
+    - uat
+    - perf
+    - performance
+    - loadtest
+
+  # Experimental
+  experimental:
+    - experiment
+    - scratch
+    - trial
+

@@ -1,0 +1,6 @@
+# Example file of user suppplied ARN jewels. If you know the specific ARN of a crown jewel, you can
+# add it here.
+
+arn_jewels:
+  - arn:aws:s3:::my-sensitive-data-bucket
+  - arn:aws:rds:::my-sensitive-data-db
